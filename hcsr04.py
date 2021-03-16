@@ -9,7 +9,7 @@ class HCSR04:
         self.sclk_pin = spin
 
         spi.init(
-            baudrate=125000,
+            baudrate=255000,
             sclk=self.sclk_pin,
             mosi=self.trigger_pin,
             miso=self.echo_pin,
