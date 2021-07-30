@@ -1,45 +1,24 @@
-from microbit import spi
-from microbit import pin13, pin14, pin15
+from microbit import pin0, pin1
+import time
+import machine
 
 
 class HCSR04:
-    def __init__(self, tpin=pin15, epin=pin14, spin=pin13):
+    def __init__(self, tpin=pin0, epin=pin1):
         self.trigger_pin = tpin
         self.echo_pin = epin
-        self.sclk_pin = spin
-
-        spi.init(
-            baudrate=255000,
-            sclk=self.sclk_pin,
-            mosi=self.trigger_pin,
-            miso=self.echo_pin,
-        )
 
     def distance_mm(self):
-        pre = 0
-        post = 0
-        k = -1
-        length = 500
-        resp = bytearray(length)
-        resp[0] = 0xFF
-        spi.write_readinto(resp, resp)
-        # find first non zero value
-        try:
-            i, value = next((ind, v) for ind, v in enumerate(resp) if v)
-        except StopIteration:
-            i = -1
-        if i > 0:
-            pre = bin(value).count("1")
-            # find first non full high value afterwards
-            try:
-                k, value = next(
-                    (ind, v)
-                    for ind, v in enumerate(resp[i : length - 2])
-                    if resp[i + ind + 1] == 0
-                )
-                post = bin(value).count("1") if k else 0
-                k = k + i
-            except StopIteration:
-                i = -1
-        dist = -1 if i < 0 else round(((pre + (k - i) * 8.0 + post) * 8 * 0.172) / 2)
+        self.trigger_pin.write_digital(0)
+        time.sleep_us(2)
+        # Send the trigger signal for 10 us
+        self.trigger_pin.write_digital(1)
+        time.sleep_us(10)
+        self.trigger_pin.write_digital(0)
+
+        # Returns the duration (us)
+        output = machine.time_pulse_us(self.echo_pin, 1)
+
+        dist = output * 0.34 / 2
+
         return dist
